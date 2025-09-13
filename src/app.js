@@ -9,6 +9,7 @@ import multer from 'multer';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import bugRoutes from './routes/bug.routes.js';
+import { initializeDatabase } from './config/database-setup.js';
 
 // Configurar dotenv
 dotenv.config();
@@ -77,11 +78,42 @@ app.get('/', (req, res) => {
         'POST /api/bugs': 'Crear bug (autenticado)',
         'GET /api/bugs': 'Listar bugs con screenshots (autenticado)',
         'GET /api/bugs/:id': 'Obtener bug específico (autenticado)',
+        'PATCH /api/bugs/:id': 'Editar bug (solo creador o admin)',
         'PATCH /api/bugs/:id/status': 'Actualizar estado del bug (admin/dev)',
         'POST /api/bugs/upload': 'Subir screenshot (autenticado)'
+      },
+      setup: {
+        'POST /api/setup/init-db': 'Inicializar base de datos (TEMPORAL)'
       }
     }
   });
+});
+
+// Endpoint temporal para inicializar la base de datos
+app.post('/api/setup/init-db', async (req, res) => {
+  try {
+    console.log('🚀 Inicializando base de datos desde endpoint...');
+    const initialized = await initializeDatabase();
+    
+    if (initialized) {
+      res.json({
+        success: true,
+        message: 'Base de datos inicializada exitosamente'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Error al inicializar la base de datos'
+      });
+    }
+  } catch (error) {
+    console.error('Error inicializando DB:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al inicializar la base de datos',
+      error: error.message
+    });
+  }
 });
 
 // Middleware para manejar rutas no encontradas
